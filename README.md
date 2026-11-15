@@ -1,6 +1,4 @@
 
-# EDGE VISION – Webcam Edge Detection
-
 ## 1. Giới thiệu
 
 **EDGE VISION** là ứng dụng phát hiện biên từ video webcam theo thời gian thực, sử dụng hai thuật toán xử lý ảnh truyền thống là **Sobel** và **Laplacian**.
@@ -178,9 +176,6 @@ DeTai20_WebcamEdges/
 ├── .gitignore
 └── README.md
 ```
-
-Lưu ý: Dataset và kết quả thực nghiệm được lưu cục bộ, không được đưa lên GitHub theo cấu hình `.gitignore` hiện tại.
-
 ## 7. Hướng dẫn cài đặt
 
 ### 7.1. Yêu cầu
@@ -274,13 +269,3 @@ Chương trình sẽ xử lý ảnh, đo hiệu năng, đánh giá đặc điể
 - Chưa có bộ nhãn biên chuẩn để đánh giá Precision, Recall và F1-score.
 - Hiệu năng phụ thuộc vào cấu hình máy tính.
 - Có thể nghiên cứu tối ưu tốc độ xử lý và bổ sung phương pháp phát hiện biên khác.
-
-## 13. Tác giả
-
-Đề tài: Phát hiện biên từ ảnh webcam bằng Laplacian và Sobel.
-
-Học phần: Xử lý ảnh và Thị giác máy tính.
-
-Trường: Đại học Công nghệ Đông Á.
-
-Thông tin sinh viên/nhóm: Bổ sung khi hoàn thiện báo cáo.
