@@ -1,0 +1,73 @@
+
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test and coverage cache
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# VS Code local settings
+.vscode/
+
+# IDE files
+.idea/
+*.iml
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.log
+
+# ==========================================
+# DATASET - KHONG DAY ANH WEBCAM LEN GITHUB
+# ==========================================
+dataset/**
+
+# Giu lai cau truc thu muc dataset
+!dataset/
+!dataset/low_light/
+!dataset/clear_edges/
+!dataset/complex/
+!dataset/noise/
+
+# Giu lai file .gitkeep
+!dataset/**/.gitkeep
+
+# ==========================================
+# RESULTS - ANH VA SO LIEU THUC NGHIEM
+# ==========================================
+results/**
+
+# Giu thu muc results
+!results/
+!results/.gitkeep
+
+# Archive files
+*.zip
+*.rar
+*.7z

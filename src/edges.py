@@ -1,0 +1,147 @@
+# Chứa thuật toán Sobel, Laplacian.
+
+import numpy as np
+
+# Kernel Sobel theo truc X
+SOBEL_X = np.array([
+    [-1, 0, 1],
+    [-2, 0, 2],
+    [-1, 0, 1]
+], dtype=np.float32)
+
+
+# Kernel Sobel theo truc Y
+SOBEL_Y = np.array([
+    [-1, -2, -1],
+    [0, 0, 0],
+    [1, 2, 1]
+], dtype=np.float32)
+
+
+# Kernel Laplacian 4 lang gieng
+LAPLACIAN_KERNEL = np.array([
+    [0, 1, 0],
+    [1, -4, 1],
+    [0, 1, 0]
+], dtype=np.float32)
+
+
+def apply_kernel(image, kernel):
+    """
+    Tu cai dat phep tuong quan 2D giua anh va kernel.
+
+    Khong su dung ham loc cua OpenCV.
+
+    Parameters:
+        image: Anh xam 2 chieu.
+        kernel: Ma tran loc co kich thuoc le.
+
+    Returns:
+        Ma tran ket qua float32 co dau.
+    """
+
+    if image is None or image.ndim != 2:
+        raise ValueError("Dau vao phai la anh xam 2D!")
+
+    kernel = np.asarray(kernel, dtype=np.float32)
+
+    if kernel.ndim != 2:
+        raise ValueError("Kernel phai la ma tran 2D!")
+
+    kh, kw = kernel.shape
+
+    if kh % 2 == 0 or kw % 2 == 0:
+        raise ValueError("Kich thuoc kernel phai la so le!")
+
+    # Chuyen anh sang float de tranh tran so
+    image_float = image.astype(np.float32)
+
+    # Padding kieu reflect, tuong duong BORDER_REFLECT_101
+    pad_h = kh // 2
+    pad_w = kw // 2
+
+    padded = np.pad(
+        image_float,
+        ((pad_h, pad_h), (pad_w, pad_w)),
+        mode="reflect"
+    )
+
+    height, width = image.shape
+
+    result = np.zeros(
+        (height, width),
+        dtype=np.float32
+    )
+
+    # Tinh tong tich tung phan tu kernel va anh
+    # Xu ly ca ma tran de tang toc so voi lap tung pixel
+    for i in range(kh):
+        for j in range(kw):
+            result += (
+                kernel[i, j]
+                * padded[i:i + height, j:j + width]
+            )
+
+    return result
+
+
+def detect_sobel(gray):
+    """
+    Phat hien bien bang Sobel tu cai dat.
+
+    Returns:
+        Anh bien uint8.
+    """
+
+    gx = apply_kernel(gray, SOBEL_X)
+    gy = apply_kernel(gray, SOBEL_Y)
+
+    # Do lon gradient
+    magnitude = np.sqrt(gx * gx + gy * gy)
+
+    # Chuan hoa ve khoang 0-255
+    # Su dung cung thang do cho moi khung hinh
+    magnitude = magnitude / (4.0 * 255.0) * 255.0
+
+    edges = np.clip(
+        magnitude, 0, 255
+    ).astype(np.uint8)
+
+    return edges
+
+
+def detect_laplacian(gray):
+    """
+    Phat hien bien bang Laplacian tu cai dat.
+
+    Returns:
+        Anh bien uint8.
+    """
+
+    response = apply_kernel(
+        gray,
+        LAPLACIAN_KERNEL
+    )
+
+    # Lay tri tuyet doi phan ung Laplacian
+    magnitude = np.abs(response)
+
+    # Giu thang do co dinh
+    edges = np.clip(
+        magnitude, 0, 255
+    ).astype(np.uint8)
+
+    return edges
+
+
+def detect_edges(gray):
+    """
+    Chay ca hai thuat toan tren cung mot anh.
+
+    Returns:
+        sobel_edges, laplacian_edges
+    """
+    sobel_edges = detect_sobel(gray)
+    laplacian_edges = detect_laplacian(gray)
+
+    return sobel_edges, laplacian_edges
