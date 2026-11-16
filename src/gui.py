@@ -132,7 +132,7 @@ class EdgeDetectionApp:
 
         header = ttk.Frame(main, style="App.TFrame")
         header.pack(fill=tk.X, pady=(0, 12))
-        ttk.Label(header, text="EDGE VISION  |  DE TAI 20", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(header, text="NHOM 16  |  DE TAI 20", style="Title.TLabel").pack(anchor="w")
         ttk.Label(header, text="Phat hien bien webcam bang Sobel va Laplacian  •  Xu ly thoi gian thuc", style="Subtitle.TLabel").pack(anchor="w", pady=(2, 0))
 
         status = ttk.Label(main, textvariable=self.status_var, style="Status.TLabel", anchor="w")
