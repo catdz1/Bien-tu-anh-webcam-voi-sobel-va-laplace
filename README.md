@@ -1,7 +1,7 @@
 
 ## 1. Giới thiệu
 
-**EDGE VISION** là ứng dụng phát hiện biên từ video webcam theo thời gian thực, sử dụng hai thuật toán xử lý ảnh truyền thống là **Sobel** và **Laplacian**.
+Ứng dụng phát hiện biên từ video webcam theo thời gian thực, sử dụng hai thuật toán xử lý ảnh truyền thống là **Sobel** và **Laplacian**.
 
 Project được phát triển trong khuôn khổ học phần **Xử lý ảnh và Thị giác máy tính (IT3243)**.
 
@@ -145,7 +145,7 @@ Chương trình có khả năng lưu:
 ## 6. Cấu trúc thư mục
 
 ```text
-DeTai20_WebcamEdges/
+DeTai20_BienWebcam/
 │
 ├── src/
 │   ├── __init__.py
@@ -188,8 +188,8 @@ DeTai20_WebcamEdges/
 ### 7.2. Clone repository
 
 ```bash
-git clone https://github.com/catdz1/EdgeVision-Sobel-Laplacian.git
-cd EdgeVision-Sobel-Laplacian
+git clone https://github.com/catdz1/Bien-tu-anh-webcam-voi-sobel-va-laplace.git
+
 ```
 
 ### 7.3. Tạo môi trường ảo
