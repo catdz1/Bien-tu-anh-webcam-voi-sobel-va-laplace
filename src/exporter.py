@@ -14,18 +14,7 @@ RESULT_DIR = BASE_DIR / "results"
 
 
 def save_experiment(frame, result, stats, settings):
-    """
-    Luu 7 anh va thong so thuc nghiem vao CSV.
-
-    Parameters:
-        frame: Anh webcam goc.
-        result: Ket qua cua process_frame().
-        stats: Ket qua cua PerformanceMonitor.
-        settings: Dictionary tham so xu ly.
-
-    Returns:
-        Duong dan thu muc luu anh.
-    """
+    
 
     RESULT_DIR.mkdir(
         parents=True,

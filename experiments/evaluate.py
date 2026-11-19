@@ -1,4 +1,5 @@
 # python -m experiments.evaluate
+# chạy kiểm thử và đánh giá tự động
 
 import csv
 import time

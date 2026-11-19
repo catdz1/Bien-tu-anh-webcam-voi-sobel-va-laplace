@@ -6,10 +6,7 @@ from statistics import mean
 
 
 class PerformanceMonitor:
-    """
-    Luu thong ke cua 120 frame gan nhat.
-    """
-
+    
     def __init__(self, max_samples=120):
         self.max_samples = max_samples
         self.reset()

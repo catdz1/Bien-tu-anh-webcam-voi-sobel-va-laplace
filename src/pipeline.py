@@ -13,7 +13,7 @@ from src.edges import (
 )
 
 
-# Laplacian 8 lang gieng
+# Laplacian 8 mat can
 LAPLACIAN_8 = np.array([
     [1, 1, 1],
     [1, -8, 1],
@@ -44,13 +44,7 @@ def apply_threshold(image, threshold):
 
 
 def laplacian_with_kernel(gray, kernel_type=4):
-    """
-    Phat hien bien Laplacian voi kernel tuy chon.
-
-    kernel_type:
-        4: Bon lang gieng
-        8: Tam lang gieng
-    """
+    
     if kernel_type == 4:
         kernel = LAPLACIAN_KERNEL
 
@@ -59,7 +53,7 @@ def laplacian_with_kernel(gray, kernel_type=4):
 
     else:
         raise ValueError(
-            "Kernel Laplacian phai la 4 hoac 8!"
+           
         )
 
     response = apply_kernel(gray, kernel)
@@ -82,17 +76,7 @@ def process_frame(
     laplacian_threshold=40,
     laplacian_kernel=4
 ):
-    """
-    Xu ly mot khung hinh webcam.
-
-    Ket qua gom:
-        - Anh xam
-        - Anh Gaussian
-        - Anh Sobel
-        - Anh Laplacian
-        - Anh bien nhi phan
-        - Thoi gian xu ly (ms)
-    """
+    
 
     # 1. Tien xu ly
     t0 = time.perf_counter()

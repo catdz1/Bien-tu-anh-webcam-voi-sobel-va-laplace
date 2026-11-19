@@ -1,3 +1,4 @@
+# & "E:\Program\Python\XuLyAnh_Venv\.venv\Scripts\python.exe" -m unittest discover -s tests -p "test_*.py" -v
 
 import unittest
 

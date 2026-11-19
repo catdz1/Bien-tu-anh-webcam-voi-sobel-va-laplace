@@ -18,7 +18,7 @@ SOBEL_Y = np.array([
 ], dtype=np.float32)
 
 
-# Kernel Laplacian 4 lang gieng
+# Kernel Laplacian 4 mat na
 LAPLACIAN_KERNEL = np.array([
     [0, 1, 0],
     [1, -4, 1],
@@ -27,18 +27,7 @@ LAPLACIAN_KERNEL = np.array([
 
 
 def apply_kernel(image, kernel):
-    """
-    Tu cai dat phep tuong quan 2D giua anh va kernel.
-
-    Khong su dung ham loc cua OpenCV.
-
-    Parameters:
-        image: Anh xam 2 chieu.
-        kernel: Ma tran loc co kich thuoc le.
-
-    Returns:
-        Ma tran ket qua float32 co dau.
-    """
+    
 
     if image is None or image.ndim != 2:
         raise ValueError("Dau vao phai la anh xam 2D!")
@@ -86,12 +75,7 @@ def apply_kernel(image, kernel):
 
 
 def detect_sobel(gray):
-    """
-    Phat hien bien bang Sobel tu cai dat.
-
-    Returns:
-        Anh bien uint8.
-    """
+   
 
     gx = apply_kernel(gray, SOBEL_X)
     gy = apply_kernel(gray, SOBEL_Y)
@@ -111,12 +95,7 @@ def detect_sobel(gray):
 
 
 def detect_laplacian(gray):
-    """
-    Phat hien bien bang Laplacian tu cai dat.
-
-    Returns:
-        Anh bien uint8.
-    """
+   
 
     response = apply_kernel(
         gray,
@@ -135,12 +114,7 @@ def detect_laplacian(gray):
 
 
 def detect_edges(gray):
-    """
-    Chay ca hai thuat toan tren cung mot anh.
-
-    Returns:
-        sobel_edges, laplacian_edges
-    """
+   
     sobel_edges = detect_sobel(gray)
     laplacian_edges = detect_laplacian(gray)
 
