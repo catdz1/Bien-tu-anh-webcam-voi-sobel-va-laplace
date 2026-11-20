@@ -58,7 +58,7 @@ def process_frame(
     laplacian = detect_laplacian(
         blurred,
         kernel_type=laplacian_kernel
-)
+    )
 
 
     t3 = time.perf_counter()

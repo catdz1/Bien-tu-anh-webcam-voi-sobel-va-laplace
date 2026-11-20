@@ -36,11 +36,44 @@ def edge_statistics(mask):
     return 100 * count / binary.size, number - 1, float(max(areas) / count)
 
 
+
 def mask_iou(a, b):
+    """
+    Tinh Intersection over Union cua hai mat na bien.
+
+    Tra ve NaN neu ca hai mat na deu rong,
+    vi khong co duong bien de danh gia do on dinh.
+    """
+    if a.shape != b.shape:
+        raise ValueError("Hai mat na phai cung kich thuoc!")
+
     aa = a > 0
     bb = b > 0
+
+    intersection = np.count_nonzero(aa & bb)
     union = np.count_nonzero(aa | bb)
-    return float(np.count_nonzero(aa & bb) / union) if union else 1.0
+
+    if union == 0:
+        return float("nan")
+
+    return float(intersection / union)
+
+
+def valid_mean(values):
+    """
+    Tinh trung binh, bo qua NaN va gia tri khong hop le.
+    """
+    valid = [
+        value for value in values
+        if value is not None and np.isfinite(value)
+    ]
+
+    if not valid:
+        return float("nan")
+
+    return mean(valid)
+
+
 
 
 def add_noise(image, seed):
@@ -164,10 +197,29 @@ def main():
                'sobel_noise_iou', 'laplacian_noise_iou']
     summaries = []
     for g, l in CONFIGS:
-        name = f'G{g}-L{l}'
+        name = f"G{g}-L{l}"
         group = groups[name]
-        summaries.append({'config': name, 'images': len(group),
-                          **{field: mean(r[field] for r in group) for field in numeric}})
+
+        summaries.append({
+            "config": name,
+            "images": len(group),
+
+            **{
+                field: valid_mean(r[field] for r in group)
+                for field in numeric
+            },
+
+            "sobel_iou_valid_count": sum(
+                np.isfinite(r["sobel_noise_iou"])
+                for r in group
+            ),
+
+            "laplacian_iou_valid_count": sum(
+                np.isfinite(r["laplacian_noise_iou"])
+                for r in group
+            )
+        })
+
     write_csv(OUT / 'summary.csv', summaries)
 
     plot_groups(summaries, 'sobel_ms', 'laplacian_ms', 'Sobel', 'Laplacian',
