@@ -1,4 +1,4 @@
-# & "E:\Program\Python\XuLyAnh_Venv\.venv\Scripts\python.exe" -m unittest discover -s tests -p "test_*.py" -v
+# python -m unittest discover -s tests -p "test_*.py" -v
 
 import unittest
 
@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 
 from src.edges import (
+    detect_laplacian,
+    LAPLACIAN_KERNEL_8,
     apply_kernel,
     SOBEL_X,
     SOBEL_Y,
@@ -78,6 +80,38 @@ class TestEdgeAlgorithms(unittest.TestCase):
         np.testing.assert_allclose(
             custom, reference, atol=1e-5
         )
+
+    
+    def test_laplacian_8_neighbors(self):
+        # Ket qua thuat toan tu cai dat
+        custom = detect_laplacian(
+            self.image,
+            kernel_type=8
+        )
+
+        # Ket qua tham chieu tu OpenCV
+        response = cv2.filter2D(
+            self.image,
+            cv2.CV_32F,
+            LAPLACIAN_KERNEL_8,
+            borderType=cv2.BORDER_REFLECT_101
+        )
+
+        expected = np.clip(
+            np.abs(response), 0, 255
+        ).astype(np.uint8)
+
+        np.testing.assert_array_equal(
+            custom, expected
+        )
+
+    def test_invalid_laplacian_kernel(self):
+        with self.assertRaises(ValueError):
+            detect_laplacian(
+                self.image,
+                kernel_type=6
+            )
+
 
     def test_output_shape_and_type(self):
         sobel, laplacian = detect_edges(

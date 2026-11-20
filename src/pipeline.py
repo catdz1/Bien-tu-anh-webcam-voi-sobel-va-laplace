@@ -1,24 +1,10 @@
-# Điều phối các bước xử lý, tạo ảnh biên nhị phân và đo thời gian.
-
+# Điều phối thuật toán, ngưỡng hóa, đo thời gian
 
 import time
 import cv2
-import numpy as np
 
 from src.preprocessing import preprocess_frame
-from src.edges import (
-    detect_sobel,
-    apply_kernel,
-    LAPLACIAN_KERNEL
-)
-
-
-# Laplacian 8 mat can
-LAPLACIAN_8 = np.array([
-    [1, 1, 1],
-    [1, -8, 1],
-    [1, 1, 1]
-], dtype=np.float32)
+from src.edges import detect_sobel, detect_laplacian
 
 
 def apply_threshold(image, threshold):
@@ -41,32 +27,6 @@ def apply_threshold(image, threshold):
     )
 
     return binary
-
-
-def laplacian_with_kernel(gray, kernel_type=4):
-    
-    if kernel_type == 4:
-        kernel = LAPLACIAN_KERNEL
-
-    elif kernel_type == 8:
-        kernel = LAPLACIAN_8
-
-    else:
-        raise ValueError(
-           
-        )
-
-    response = apply_kernel(gray, kernel)
-
-    magnitude = np.abs(response)
-
-    result = np.clip(
-        magnitude,
-        0,
-        255
-    ).astype(np.uint8)
-
-    return result
 
 
 def process_frame(
@@ -93,11 +53,13 @@ def process_frame(
 
     t2 = time.perf_counter()
 
-    # 3. Laplacian tu cai dat
-    laplacian = laplacian_with_kernel(
+    
+    # 3. Laplacian tu cai dat (4 hoac 8 lang gieng)
+    laplacian = detect_laplacian(
         blurred,
-        laplacian_kernel
-    )
+        kernel_type=laplacian_kernel
+)
+
 
     t3 = time.perf_counter()
 

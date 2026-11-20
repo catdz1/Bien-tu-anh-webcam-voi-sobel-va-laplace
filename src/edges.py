@@ -26,6 +26,15 @@ LAPLACIAN_KERNEL = np.array([
 ], dtype=np.float32)
 
 
+# Kernel Laplacian 8 láng giềng
+LAPLACIAN_KERNEL_8 = np.array([
+    [1, 1, 1],
+    [1, -8, 1],
+    [1, 1, 1]
+], dtype=np.float32)
+
+
+
 def apply_kernel(image, kernel):
     
 
@@ -94,18 +103,29 @@ def detect_sobel(gray):
     return edges
 
 
-def detect_laplacian(gray):
-   
 
-    response = apply_kernel(
-        gray,
-        LAPLACIAN_KERNEL
-    )
+def detect_laplacian(gray, kernel_type=4):
+    
 
-    # Lay tri tuyet doi phan ung Laplacian
+    # Lua chon kernel
+    if kernel_type == 4:
+        kernel = LAPLACIAN_KERNEL
+
+    elif kernel_type == 8:
+        kernel = LAPLACIAN_KERNEL_8
+
+    else:
+        raise ValueError(
+            "Laplacian kernel phai la 4 hoac 8!"
+        )
+
+    # Ap dung phep tich chap kernel
+    response = apply_kernel(gray, kernel)
+
+    # Lay gia tri tuyet doi cua dao ham bac hai
     magnitude = np.abs(response)
 
-    # Giu thang do co dinh
+    # Gioi han cuong do ve 0-255
     edges = np.clip(
         magnitude, 0, 255
     ).astype(np.uint8)
