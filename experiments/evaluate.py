@@ -37,6 +37,9 @@ SAVE_IMAGE_THRESHOLDS = THRESHOLDS  # Lưu ảnh so sánh tại cả 3 ngưỡng
 REPEATS = 20
 WARMUP = 3
 SIGMA = 15.0
+# IoU của mặt nạ chỉ vài điểm ảnh không có ý nghĩa: coi là N/A khi biên ảnh sạch
+# có ít hơn 0,05 % tổng số điểm ảnh (khoảng 150 điểm ảnh với ảnh 640x480).
+MIN_EDGE_FRACTION = 0.0005
 
 CONFIGS = [(g, l) for g in GAUSSIAN_SIZES for l in LAPLACIAN_KERNELS]
 FIELDS = ["preprocess_ms", "sobel_ms", "laplacian_ms", "threshold_ms", "total_ms"]
@@ -61,14 +64,20 @@ def edge_statistics(mask):
     return 100 * count / binary.size, number - 1, float(max(areas) / count)
 
 
-def mask_iou(a, b):
-    """IoU không xác định khi cả hai mặt nạ biên rỗng."""
+def mask_iou(a, b, min_fraction=MIN_EDGE_FRACTION):
+    """IoU của hai mặt nạ biên.
+
+    Trả về NaN (không xác định) khi:
+    - cả hai mặt nạ rỗng, hoặc
+    - biên ảnh sạch quá ít (< min_fraction tổng số điểm ảnh), vì IoU của
+      vài điểm ảnh không phản ánh độ ổn định.
+    """
     if a.shape != b.shape:
         raise ValueError("Hai mat na phai cung kich thuoc!")
     aa = a > 0
     bb = b > 0
     union = np.count_nonzero(aa | bb)
-    if union == 0:
+    if union == 0 or np.count_nonzero(aa) < min_fraction * aa.size:
         return float("nan")
     return float(np.count_nonzero(aa & bb) / union)
 
@@ -127,18 +136,39 @@ def write_csv(path, rows):
         writer.writerows(rows)
 
 
-def plot_groups(rows, field_a, field_b, label_a, label_b, title, filename, ylabel):
+def plot_groups(rows, field_a, field_b, label_a, label_b, title, filename, ylabel,
+                count_a=None, count_b=None):
+    """Biểu đồ cột đôi. Cột NaN ghi "N/A"; cột thiếu mẫu hợp lệ có nét gạch chéo."""
     labels = [f"G{r['gaussian']}-L{r['laplacian_kernel']}" for r in rows]
     x = np.arange(len(labels))
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.bar(x - 0.19, [r[field_a] for r in rows], 0.38, label=label_a)
-    ax.bar(x + 0.19, [r[field_b] for r in rows], 0.38, label=label_b)
+    fig, ax = plt.subplots(figsize=(10, 5.5))
+    partial = False
+    for offset, field, label, count in ((-0.19, field_a, label_a, count_a),
+                                        (0.19, field_b, label_b, count_b)):
+        values = [r[field] for r in rows]
+        bars = ax.bar(x + offset, [0 if not np.isfinite(v) else v for v in values],
+                      0.38, label=label)
+        for bar, row, v in zip(bars, rows, values):
+            if not np.isfinite(v):
+                ax.annotate("N/A", (bar.get_x() + bar.get_width() / 2, 0),
+                            ha="center", va="bottom", fontsize=9, color="gray")
+            elif count and row[count] < row["images"]:
+                bar.set_hatch("//")
+                bar.set_edgecolor("white")
+                partial = True
+                ax.annotate(f"n={row[count]}", (bar.get_x() + bar.get_width() / 2, v),
+                            ha="center", va="bottom", fontsize=8)
     ax.set_xticks(x, labels)
     ax.set_xlabel("Cấu hình (G: Gaussian, L: Laplacian)")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    ax.legend()
-    fig.tight_layout()
+    top = ax.get_ylim()[1]
+    ax.set_ylim(0, top * 1.18)  # chừa chỗ cho chú giải, không đè lên cột
+    ax.legend(loc="upper left", ncol=2)
+    if partial:
+        fig.text(0.01, 0.01, "Cột gạch chéo: chỉ một phần ảnh có IoU hợp lệ (n = số ảnh hợp lệ); "
+                 "N/A: không có cặp hợp lệ.", fontsize=8, color="gray")
+    fig.tight_layout(rect=(0, 0.03, 1, 1))
     fig.savefig(OUT / filename, dpi=160)
     plt.close(fig)
 
@@ -155,25 +185,47 @@ def plot_fps(rows):
     plt.close(fig)
 
 
-def plot_threshold_curves(rows, field_sobel, field_lap, ylabel, title, filename_prefix):
-    """3 đường (Sobel, Laplacian 4, Laplacian 8) theo T cho từng Gaussian."""
+def plot_threshold_curves(rows, field_sobel, field_lap, ylabel, title, filename_prefix,
+                          count_sobel=None, count_lap=None):
+    """3 đường (Sobel, Laplacian 4, Laplacian 8) theo T cho từng Gaussian.
+
+    Điểm NaN ghi "N/A" ở đáy biểu đồ; điểm thiếu mẫu hợp lệ vẽ marker rỗng.
+    """
+    by_key = {(r["gaussian"], r["laplacian_kernel"], r["threshold"]): r for r in rows}
+    # Sobel không phụ thuộc việc chọn Laplacian 4 hay 8; dùng L4 một lần.
+    series = (
+        ("Sobel", "o", 4, field_sobel, count_sobel),
+        ("Laplacian 4 láng giềng", "s", 4, field_lap, count_lap),
+        ("Laplacian 8 láng giềng", "^", 8, field_lap, count_lap),
+    )
     for g in GAUSSIAN_SIZES:
-        by_key = {(r["gaussian"], r["laplacian_kernel"], r["threshold"]): r for r in rows}
-        # Sobel không phụ thuộc việc chọn Laplacian 4 hay 8; dùng L4 một lần.
-        sobel = [by_key[(g, 4, t)][field_sobel] for t in THRESHOLDS]
-        lap4 = [by_key[(g, 4, t)][field_lap] for t in THRESHOLDS]
-        lap8 = [by_key[(g, 8, t)][field_lap] for t in THRESHOLDS]
-        fig, ax = plt.subplots(figsize=(9, 5))
-        ax.plot(THRESHOLDS, sobel, marker="o", label="Sobel")
-        ax.plot(THRESHOLDS, lap4, marker="s", label="Laplacian 4 láng giềng")
-        ax.plot(THRESHOLDS, lap8, marker="^", label="Laplacian 8 láng giềng")
+        fig, ax = plt.subplots(figsize=(9, 5.5))
+        partial = False
+        for label, marker, kernel, field, count in series:
+            records = [by_key[(g, kernel, t)] for t in THRESHOLDS]
+            values = [r[field] for r in records]
+            line, = ax.plot(THRESHOLDS, values, marker=marker, label=label)
+            for t, r, v in zip(THRESHOLDS, records, values):
+                if not np.isfinite(v):
+                    ax.annotate("N/A", (t, 0), xycoords=("data", "axes fraction"),
+                                xytext=(0, 4), textcoords="offset points", ha="center",
+                                fontsize=8, color=line.get_color())
+                elif count and r[count] < r["images"]:
+                    partial = True
+                    ax.plot([t], [v], marker=marker, markersize=10,
+                            markerfacecolor="white", color=line.get_color())
+                    ax.annotate(f"n={r[count]}", (t, v), xytext=(0, 8),
+                                textcoords="offset points", ha="center", fontsize=8)
         ax.set_xlabel("Ngưỡng phát hiện biên T")
         ax.set_ylabel(ylabel)
         ax.set_title(f"Gaussian {g}×{g} – {title}")
         ax.set_xticks(THRESHOLDS)
         ax.grid(alpha=0.2)
         ax.legend()
-        fig.tight_layout()
+        if partial:
+            fig.text(0.01, 0.01, "Marker rỗng: chỉ một phần ảnh có IoU hợp lệ (n = số ảnh hợp lệ). "
+                     "N/A: không có cặp hợp lệ.", fontsize=8, color="gray")
+        fig.tight_layout(rect=(0, 0.03, 1, 1))
         fig.savefig(OUT / f"{filename_prefix}_G{g}.png", dpi=160)
         plt.close(fig)
 
@@ -280,7 +332,8 @@ def main():
                 f"So sánh mật độ điểm biên (T={baseline})", "02_edge_density.png", "Mật độ điểm biên (%)")
     plot_groups(baseline_rows, "sobel_noise_iou", "laplacian_noise_iou", "Sobel", "Laplacian",
                 f"Độ ổn định trước nhiễu Gaussian (σ={SIGMA}, T={baseline})",
-                "03_noise_stability.png", "IoU (chỉ tính các cặp hợp lệ)")
+                "03_noise_stability.png", "IoU (chỉ tính các cặp hợp lệ)",
+                count_a="sobel_iou_valid_count", count_b="laplacian_iou_valid_count")
     plot_fps(baseline_rows)
 
     plot_threshold_curves(summaries, "sobel_density_pct", "laplacian_density_pct",
@@ -288,7 +341,9 @@ def main():
                           "05_density_vs_threshold")
     plot_threshold_curves(summaries, "sobel_noise_iou", "laplacian_noise_iou",
                           "IoU (bỏ qua cặp mặt nạ rỗng)", "Độ ổn định trước nhiễu theo ngưỡng T",
-                          "06_noise_iou_vs_threshold")
+                          "06_noise_iou_vs_threshold",
+                          count_sobel="sobel_iou_valid_count",
+                          count_lap="laplacian_iou_valid_count")
 
     print("\nSaved results to:", OUT)
     print(f"Images: {len(images)} | configurations/image: {len(CONFIGS) * len(THRESHOLDS)}")

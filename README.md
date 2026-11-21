@@ -160,13 +160,13 @@ DeTai20_BienWebcam/
 │   ├── __init__.py
 │   └── evaluate.py
 │
-├── dataset/
+├── dataset/           
 │   ├── low_light/
 │   ├── clear_edges/
 │   ├── complex/
 │   └── noise/
 │
-├── results/
+├── results/           
 │
 ├── tests/
 │   └── test_edges.py
@@ -238,31 +238,37 @@ Chuẩn bị ảnh trong thư mục `dataset/`, sau đó chạy:
 python -m experiments.evaluate
 ```
 
-Chương trình sẽ xử lý ảnh, đo hiệu năng, đánh giá đặc điểm đường biên và xuất các kết quả:
+Chương trình xử lý từng ảnh một lần cho mỗi cấu hình (Gaussian G = 3, 5, 9 và Laplacian 4 hoặc 8 láng giềng),
+đo thời gian nhiều lượt, sau đó nhị phân hóa lại cùng bản đồ biên ở nhiều ngưỡng T = 10, 20, 30.
+Nhờ vậy mỗi ảnh có 3 × 2 × 3 = 18 cấu hình mà không phải tính lại tích chập cho từng ngưỡng.
 
-- details.csv
-- summary.csv
-- Biểu đồ thời gian xử lý
-- Biểu đồ mật độ biên
-- Biểu đồ ổn định trước nhiễu
-- Biểu đồ thông lượng pipeline
+Lưu ý khi đọc kết quả:
 
-## 11. Trạng thái phát triển
+- Sobel đã chia 4, còn Laplacian giữ nguyên thang đo, nên cùng một ngưỡng T không có nghĩa là cùng độ nhạy.
+  Mật độ biên giữa hai thuật toán vì thế chỉ so sánh trực tiếp được khi xét theo T (biểu đồ 05).
+- Độ ổn định nhiễu dùng IoU giữa biên ảnh sạch và biên ảnh có nhiễu Gaussian (σ = 15).
+  IoU là N/A khi cả hai mặt nạ rỗng, hoặc khi biên ảnh sạch có ít hơn 0,05 % số điểm ảnh
+  (`MIN_EDGE_FRACTION`). Cột `*_iou_valid_count` trong `summary.csv` cho biết số ảnh hợp lệ.
+- Kết quả chỉ mang tính minh họa trên bộ ảnh nhỏ; không nên kết luận chung từ vài ảnh.
 
-- [x] Khởi tạo project.
-- [x] Đọc webcam bằng OpenCV.
-- [x] Chuyển ảnh xám và lọc Gaussian.
-- [x] Tự cài đặt Sobel và Laplacian.
-- [x] Điều chỉnh tham số xử lý.
-- [x] Đo FPS và thời gian xử lý.
-- [x] Hoàn thiện giao diện Tkinter.
-- [x] Lưu ảnh và dữ liệu CSV.
-- [x] Chạy thử chương trình đánh giá.
-- [ ] Hoàn thiện bộ dữ liệu chính thức.
-- [ ] Đánh giá đầy đủ trên nhiều điều kiện ánh sáng.
-- [ ] Hoàn thiện báo cáo bài tập lớn.
+Kết quả được ghi vào `results/evaluation_<thời gian>/`:
 
-## 12. Hạn chế và hướng phát triển
+| Tệp | Nội dung |
+|---|---|
+| `details.csv` | Số liệu từng ảnh × cấu hình × ngưỡng |
+| `summary.csv` | Trung bình theo cấu hình × ngưỡng, kèm số ảnh hợp lệ (`*_iou_valid_count`) |
+| `01_algorithm_times.png` | Thời gian xử lý Sobel và Laplacian (T cơ sở) |
+| `02_edge_density.png` | Mật độ điểm biên (T cơ sở) |
+| `03_noise_stability.png` | IoU trước nhiễu Gaussian (T cơ sở) |
+| `04_pipeline_fps.png` | Thông lượng toàn bộ pipeline (không tính webcam và GUI) |
+| `05_density_vs_threshold_G*.png` | Mật độ biên theo ngưỡng T, mỗi Gaussian một ảnh |
+| `06_noise_iou_vs_threshold_G*.png` | IoU khi có nhiễu theo ngưỡng T, mỗi Gaussian một ảnh |
+| `comparisons/<nhóm>/<ảnh>/G*_L*_T*.png` | Ảnh gốc, ảnh sau Gaussian, biên nhị phân Sobel và Laplacian |
+
+Trong biểu đồ, "N/A" là không có cặp hợp lệ; cột gạch chéo hoặc marker rỗng là chỉ một phần ảnh có IoU hợp lệ (ghi `n=`).
+Các tham số `THRESHOLDS`, `BASELINE_THRESHOLD`, `SAVE_IMAGE_THRESHOLDS` nằm ở đầu `experiments/evaluate.py`.
+
+## 11. Hạn chế và hướng phát triển
 
 - Chất lượng phát hiện biên phụ thuộc vào ánh sáng và mức nhiễu.
 - Ngưỡng Sobel và Laplacian cần được điều chỉnh theo ảnh.

@@ -11,7 +11,6 @@ def convert_to_grayscale(frame):
 
     return gray
 
-
 def apply_gaussian_blur(gray, kernel_size=5):
   
     if gray is None or gray.size == 0:
